@@ -13,10 +13,10 @@ class Vector;
 namespace util {
 
 template<typename V, typename Idxs>
-struct idx_impl;
+struct vec_idx_impl;
 
 template<std::size_t Size, typename T, std::size_t... Idxs>
-struct idx_impl<Vector<Size, T>, std::index_sequence<Idxs...>> {
+struct vec_idx_impl<Vector<Size, T>, std::index_sequence<Idxs...>> {
     static constexpr T dot(const Vector<Size, T>& lhs, const Vector<Size, T>& rhs) {
         return ((lhs.get(Idxs) * rhs.get(Idxs)) + ...);
     };
@@ -30,7 +30,7 @@ public:
     static const std::size_t Size = N;
 
 private:
-    using idx_impl = util::idx_impl<Vector<Size, T>, std::make_index_sequence<Size>>;
+    using idx_impl = util::vec_idx_impl<Vector<Size, T>, std::make_index_sequence<Size>>;
 
     T data[Size];
 
@@ -44,7 +44,7 @@ public:
         return n < Size ? data[n] : throw std::invalid_argument("Index must be less than Vector::Size");
     }
 
-    constexpr T dot(const Vector<Size, T>& other) const {
+    constexpr T dot(const Vector<Size, T>& other) const noexcept {
         return idx_impl::dot(*this, other);
     }
 };
