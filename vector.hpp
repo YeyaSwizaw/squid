@@ -47,6 +47,22 @@ public:
     constexpr T dot(const Vector<Size, T>& other) const noexcept {
         return idx_impl::dot(*this, other);
     }
+
+    constexpr auto begin() const {
+        return std::begin(data);
+    }
+
+    constexpr auto end() const {
+        return std::end(data);
+    }
+
+    constexpr auto cbegin() const {
+        return std::cbegin(data);
+    }
+
+    constexpr auto cend() const {
+        return std::cend(data);
+    }
 };
 
 }

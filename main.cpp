@@ -31,9 +31,9 @@ int main(int argc, char* argv[]) {
 
     constexpr auto mat = mat1 * mat2;
 
-    for(int i = 0; i < mat.Rows; ++i) {
-        for(int j = 0; j < mat.Cols; ++j) {
-            std::cout << mat.row(i).get(j) << ",";
+    for(auto row : mat.rows()) {
+        for(int n : row) {
+            std::cout << n << ",";
         }
 
         std::cout << std::endl;

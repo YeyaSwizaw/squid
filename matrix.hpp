@@ -9,8 +9,16 @@
 
 namespace squid {
 
+enum class MatrixIteratorMode {
+    Rows,
+    Cols
+};
+
 template<std::size_t N, std::size_t M, typename T>
 class Matrix;
+
+template<std::size_t N, std::size_t M, typename T, MatrixIteratorMode mode>
+class MatrixIterator;
 
 namespace util {
 
@@ -67,6 +75,9 @@ public:
     static const std::size_t Rows = N;
     static const std::size_t Cols = M;
 
+    template<MatrixIteratorMode mode>
+    using Iterator = MatrixIterator<Rows, Cols, T, mode>;
+
 private:
     using row_idx_impl = util::mat_idx_impl<Matrix<Rows, Cols, T>, std::make_index_sequence<Rows>>;
     using col_idx_impl = util::mat_idx_impl<Matrix<Rows, Cols, T>, std::make_index_sequence<Cols>>;
@@ -95,6 +106,86 @@ public:
     constexpr Matrix<Rows, P, T> operator*(const Matrix<Cols, P, T>& other) const {
         using Idxs = util::make_mul_idxs<P>;
         return util::mat_mul_impl<Rows, Cols, P, T, Idxs>::mul(*this, other);
+    };
+
+    constexpr Iterator<MatrixIteratorMode::Rows> rows() const {
+        return Iterator<MatrixIteratorMode::Rows>(*this);
+    };
+
+    constexpr Iterator<MatrixIteratorMode::Cols> cols() const {
+        return Iterator<MatrixIteratorMode::Cols>(*this);
+    };
+};
+
+template<std::size_t N, std::size_t M, typename T, MatrixIteratorMode mode, typename I>
+class MatrixIteratorBase {
+protected:
+    const Matrix<N, M, T>& mat;
+
+    std::size_t idx;
+
+    constexpr MatrixIteratorBase(const Matrix<N, M, T>& mat, std::size_t idx = 0) : mat(mat), idx(idx) {}
+
+public:
+    constexpr I begin() const {
+        return I(mat, 0);
+    }
+
+    constexpr void operator++() {
+        idx++;
+    }
+
+    constexpr void operator--() {
+        idx--;
+    }
+
+    constexpr bool operator==(const I& other) const {
+        return (this->idx == other.idx);
+    }
+
+    constexpr bool operator!=(const I& other) const {
+        return !this->operator==(other);
+    }
+};
+
+template<std::size_t N, std::size_t M, typename T, MatrixIteratorMode mode>
+class MatrixIterator;
+
+template<std::size_t N, std::size_t M, typename T>
+class MatrixIterator<N, M, T, MatrixIteratorMode::Rows> : public MatrixIteratorBase<N, M, T, MatrixIteratorMode::Rows, MatrixIterator<N, M, T, MatrixIteratorMode::Rows>> {
+private:
+    friend class Matrix<N, M, T>;
+    friend class MatrixIteratorBase<N, M, T, MatrixIteratorMode::Rows, MatrixIterator<N, M, T, MatrixIteratorMode::Rows>>;
+
+    constexpr MatrixIterator(const Matrix<N, M, T>& mat, std::size_t idx = 0)
+        : MatrixIteratorBase<N, M, T, MatrixIteratorMode::Rows, MatrixIterator<N, M, T, MatrixIteratorMode::Rows>>(mat, idx) {}
+
+public:
+    constexpr MatrixIterator<N, M, T, MatrixIteratorMode::Rows> end() const {
+        return MatrixIterator(this->mat, N);
+    }
+
+    constexpr Vector<M, T> operator*() const {
+        return this->mat.row(this->idx);
+    };
+};
+
+template<std::size_t N, std::size_t M, typename T>
+class MatrixIterator<N, M, T, MatrixIteratorMode::Cols> : public MatrixIteratorBase<N, M, T, MatrixIteratorMode::Cols, MatrixIterator<N, M, T, MatrixIteratorMode::Cols>> {
+private:
+    friend class Matrix<N, M, T>;
+    friend class MatrixIteratorBase<N, M, T, MatrixIteratorMode::Cols, MatrixIterator<N, M, T, MatrixIteratorMode::Cols>>;
+
+    constexpr MatrixIterator(const Matrix<N, M, T>& mat, std::size_t idx = 0)
+        : MatrixIteratorBase<N, M, T, MatrixIteratorMode::Cols, MatrixIterator<N, M, T, MatrixIteratorMode::Cols>>(mat, idx) {}
+
+public:
+    constexpr MatrixIterator<N, M, T, MatrixIteratorMode::Cols> end() const {
+        return MatrixIterator(this->mat, N);
+    }
+
+    constexpr Vector<M, T> operator*() const {
+        return this->mat.col(this->idx);
     };
 };
 
