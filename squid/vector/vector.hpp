@@ -5,37 +5,16 @@
 #ifndef MATHS_VECTOR_HPP
 #define MATHS_VECTOR_HPP
 
+#include "impl.hpp"
+
 namespace squid {
-
-template<std::size_t N, typename T>
-class Vector;
-
-namespace util {
-
-template<typename V, typename Idxs>
-struct vec_idx_impl;
-
-template<std::size_t Size, typename T, std::size_t... Idxs>
-struct vec_idx_impl<Vector<Size, T>, std::index_sequence<Idxs...>> {
-    template<typename U>
-    static constexpr auto dot(const Vector<Size, T>& lhs, const Vector<Size, U>& rhs) {
-        return ((lhs.get(Idxs) * rhs.get(Idxs)) + ...);
-    };
-
-    template<typename U>
-    static constexpr auto scalar_mul(const U& scalar, const Vector<Size, T>& vector) {
-        return Vector<Size, decltype(scalar * T())>((scalar * vector.get(Idxs))...);
-    };
-};
-
-}
 
 template<std::size_t N, typename T = int>
 class Vector {
 public:
     static const std::size_t Size = N;
 
-    using idx_impl = util::vec_idx_impl<Vector<Size, T>, std::make_index_sequence<Size>>;
+    using idx_impl = impl::vec_idx_impl<Vector<Size, T>, std::make_index_sequence<Size>>;
 
 private:
     T data[Size];

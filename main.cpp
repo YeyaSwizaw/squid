@@ -1,7 +1,6 @@
 #include <iostream>
 
-#include "vector.hpp"
-#include "matrix.hpp"
+#include "squid/matrix/matrix.hpp"
 
 int main(int argc, char* argv[]) {
     // Vector and dot product
