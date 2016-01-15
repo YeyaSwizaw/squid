@@ -10,6 +10,9 @@ int main(int argc, char* argv[]) {
     constexpr int dot = vec1.dot(vec2);
     std::cout << dot << std::endl;
 
+    constexpr auto res = 6 * vec1;
+    std::cout << res.get(2) << std::endl;
+
     constexpr squid::Matrix<3, 2> mat1(
         5, 2,
         1, 2,
@@ -29,10 +32,10 @@ int main(int argc, char* argv[]) {
         3, 4, -1
     );
 
-    constexpr auto mat = mat1 * mat2;
+    constexpr auto mat = 2.2 * mat1 * mat2;
 
     for(auto row : mat.rows()) {
-        for(int n : row) {
+        for(auto n : row) {
             std::cout << n << ",";
         }
 

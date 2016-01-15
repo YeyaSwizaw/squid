@@ -17,8 +17,14 @@ struct vec_idx_impl;
 
 template<std::size_t Size, typename T, std::size_t... Idxs>
 struct vec_idx_impl<Vector<Size, T>, std::index_sequence<Idxs...>> {
-    static constexpr T dot(const Vector<Size, T>& lhs, const Vector<Size, T>& rhs) {
+    template<typename U>
+    static constexpr auto dot(const Vector<Size, T>& lhs, const Vector<Size, U>& rhs) {
         return ((lhs.get(Idxs) * rhs.get(Idxs)) + ...);
+    };
+
+    template<typename U>
+    static constexpr auto scalar_mul(const U& scalar, const Vector<Size, T>& vector) {
+        return Vector<Size, decltype(scalar * T())>((scalar * vector.get(Idxs))...);
     };
 };
 
@@ -29,9 +35,9 @@ class Vector {
 public:
     static const std::size_t Size = N;
 
-private:
     using idx_impl = util::vec_idx_impl<Vector<Size, T>, std::make_index_sequence<Size>>;
 
+private:
     T data[Size];
 
 public:
@@ -44,7 +50,8 @@ public:
         return n < Size ? data[n] : throw std::invalid_argument("Index must be less than Vector::Size");
     }
 
-    constexpr T dot(const Vector<Size, T>& other) const noexcept {
+    template<typename U>
+    constexpr auto dot(const Vector<Size, U>& other) const noexcept {
         return idx_impl::dot(*this, other);
     }
 
@@ -63,6 +70,11 @@ public:
     constexpr auto cend() const {
         return std::cend(data);
     }
+};
+
+template<std::size_t N, typename T, typename U>
+constexpr auto operator*(const U& scalar, const Vector<N, T>& vector) {
+    return Vector<N, T>::idx_impl::scalar_mul(scalar, vector);
 };
 
 }

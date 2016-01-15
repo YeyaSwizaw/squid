@@ -32,17 +32,23 @@ template<std::size_t Rows, std::size_t Cols, typename T, std::size_t... Idxs>
 struct mat_idx_impl<Matrix<Rows, Cols, T>, std::index_sequence<Idxs...>> {
     static constexpr Vector<Cols, T> row(const Matrix<Rows, Cols, T>& mat, std::size_t n) {
         return squid::Vector<Cols, T>(mat.get((Cols * n) + Idxs)...);
-    }
+    };
 
     static constexpr Vector<Rows, T> col(const Matrix<Rows, Cols, T>& mat, std::size_t n) {
         return squid::Vector<Rows, T>(mat.get((Cols * Idxs) + n)...);
     };
+
+    template<typename U>
+    static constexpr auto scalar_mul(const U& scalar, const Matrix<Rows, Cols, T>& matrix) {
+        return Matrix<Rows, Cols, decltype(scalar * T())>((scalar * matrix.get(Idxs))...);
+    }
 };
 
 template<std::size_t N, std::size_t M, std::size_t P, typename T, std::size_t... IdxsX, std::size_t...IdxsY>
 struct mat_mul_impl<N, M, P, T, std::pair<std::index_sequence<IdxsX...>, std::index_sequence<IdxsY...>>> {
-    static constexpr Matrix<N, P, T> mul(const Matrix<N, M, T>& lhs, const Matrix<M, P, T>& rhs) {
-        return squid::Matrix<N, P, T>(lhs.row(IdxsX).dot(rhs.col(IdxsY))...);
+    template<typename U>
+    static constexpr Matrix<N, P, T> mul(const Matrix<N, M, T>& lhs, const Matrix<M, P, U>& rhs) {
+        return squid::Matrix<N, P, decltype(T() * U())>(lhs.row(IdxsX).dot(rhs.col(IdxsY))...);
     }
 };
 
@@ -102,8 +108,8 @@ public:
         return n < Cols ? row_idx_impl::col(*this, n) : throw std::invalid_argument("Col index must be less than Matrix::Cols");
     };
 
-    template<std::size_t P>
-    constexpr Matrix<Rows, P, T> operator*(const Matrix<Cols, P, T>& other) const {
+    template<std::size_t P, typename U>
+    constexpr Matrix<Rows, P, T> operator*(const Matrix<Cols, P, U>& other) const {
         using Idxs = util::make_mul_idxs<P>;
         return util::mat_mul_impl<Rows, Cols, P, T, Idxs>::mul(*this, other);
     };
@@ -115,6 +121,11 @@ public:
     constexpr Iterator<MatrixIteratorMode::Cols> cols() const {
         return Iterator<MatrixIteratorMode::Cols>(*this);
     };
+};
+
+template<std::size_t N, std::size_t M, typename T, typename U>
+constexpr auto operator*(const U& scalar, const Matrix<N, M, T>& matrix) {
+    return util::mat_idx_impl<Matrix<N, M, T>, std::make_index_sequence<N * M>>::scalar_mul(scalar, matrix);
 };
 
 template<std::size_t N, std::size_t M, typename T, MatrixIteratorMode mode, typename I>
