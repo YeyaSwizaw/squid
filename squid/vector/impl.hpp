@@ -26,6 +26,20 @@ struct vec_idx_impl<Vector<Size, T>, std::index_sequence<Idxs...>> {
     static constexpr auto scalar_mul(const U& scalar, const Vector<Size, T>& vector) {
         return Vector<Size, decltype(scalar * T())>((scalar * vector.get(Idxs))...);
     };
+
+    template<typename F, typename R>
+    struct map_impl {
+        static constexpr auto map(const Vector<Size, T>& vec, F f) {
+            return Vector<Size, R>(f(vec.get(Idxs))...);
+        };
+    };
+
+    template<typename F>
+    struct map_impl<F, void> {
+        static constexpr void map(const Vector<Size, T>& vec, F f) {
+            (f(vec.get(Idxs)), ...);
+        }
+    };
 };
 
 }

@@ -67,9 +67,14 @@ public:
         return MatrixIterator(this->mat, N);
     }
 
-    constexpr Vector <M, T> operator*() const {
+    constexpr Vector<M, T> operator*() const {
         return this->mat.row(this->idx);
     };
+
+    template<typename F>
+    constexpr auto map(F f) {
+        return Matrix<N, M, T>::row_idx_impl::row_map(this->mat, f);
+    }
 };
 
 template<std::size_t N, std::size_t M, typename T>

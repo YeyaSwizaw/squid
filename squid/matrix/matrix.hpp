@@ -19,10 +19,10 @@ public:
     template<MatrixIteratorMode mode>
     using Iterator = MatrixIterator<Rows, Cols, T, mode>;
 
-private:
     using row_idx_impl = impl::mat_idx_impl<Matrix<Rows, Cols, T>, std::make_index_sequence<Rows>>;
     using col_idx_impl = impl::mat_idx_impl<Matrix<Rows, Cols, T>, std::make_index_sequence<Cols>>;
 
+private:
     T data[Rows * Cols];
 
 public:
@@ -30,6 +30,21 @@ public:
 
     template<typename... U>
     constexpr Matrix(U... args) noexcept : data{args...} {};
+
+    template<typename... V>
+    static constexpr Matrix<Rows, Cols, T> from_row_vectors(V... vecs) {
+        return col_idx_impl::from_row_vectors(vecs...);
+    };
+
+    constexpr Matrix<Rows + 1, Cols, T> append_row(const Vector<Cols, T>& row) const {
+        using Idxs = std::pair<std::make_index_sequence<Rows * Cols>, std::make_index_sequence<Cols>>;
+        return impl::mat_pair_impl<Rows, Cols, 0, T, Idxs>::append_row(*this, row);
+    };
+
+    constexpr Matrix<Rows + 1, Cols, T> push_row(const Vector<Cols, T>& row) const {
+        using Idxs = std::pair<std::make_index_sequence<Rows * Cols>, std::make_index_sequence<Cols>>;
+        return impl::mat_pair_impl<Rows, Cols, 0, T, Idxs>::push_row(*this, row);
+    };
 
     constexpr T get(std::size_t n) const {
         return n < (Rows * Cols) ? data[n] : throw std::invalid_argument("Index must be less than Matrix::(Rows * Cols)");
@@ -46,7 +61,7 @@ public:
     template<std::size_t P, typename U>
     constexpr Matrix<Rows, P, T> operator*(const Matrix<Cols, P, U>& other) const {
         using Idxs = impl::make_mul_idxs<P>;
-        return impl::mat_mul_impl<Rows, Cols, P, T, Idxs>::mul(*this, other);
+        return impl::mat_pair_impl<Rows, Cols, P, T, Idxs>::mul(*this, other);
     };
 
     constexpr Iterator<MatrixIteratorMode::Rows> rows() const {

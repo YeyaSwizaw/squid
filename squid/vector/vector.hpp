@@ -13,6 +13,7 @@ template<std::size_t N, typename T = int>
 class Vector {
 public:
     static const std::size_t Size = N;
+    using Type = T;
 
     using idx_impl = impl::vec_idx_impl<Vector<Size, T>, std::make_index_sequence<Size>>;
 
@@ -32,6 +33,11 @@ public:
     template<typename U>
     constexpr auto dot(const Vector<Size, U>& other) const noexcept {
         return idx_impl::dot(*this, other);
+    }
+
+    template<typename F>
+    constexpr auto map(F f) const {
+        return idx_impl::template map_impl<F, decltype(f(T()))>::map(*this, f);
     }
 
     constexpr auto begin() const {

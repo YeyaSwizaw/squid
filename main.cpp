@@ -2,6 +2,19 @@
 
 #include "squid/matrix/matrix.hpp"
 
+constexpr double const_div(int x) {
+    return x / 1.21;
+}
+
+constexpr double const_sub(double x) {
+    return x - 100.2;
+}
+
+template<std::size_t N>
+constexpr auto const_sub_row(squid::Vector<N, double> vec) {
+    return vec.map(const_sub);
+}
+
 int main(int argc, char* argv[]) {
     // Vector and dot product
     constexpr squid::Vector<4> vec1(1, 3, 5, 6);
@@ -9,8 +22,9 @@ int main(int argc, char* argv[]) {
     constexpr int dot = vec1.dot(vec2);
     std::cout << dot << std::endl;
 
-    constexpr auto res = 6 * vec1;
-    std::cout << res.get(2) << std::endl;
+    constexpr auto vec_res = (6 * vec1).map(const_div);
+    vec_res.map([](auto x) { std::cout << x << ", "; });
+    std::cout << std::endl << std::endl;
 
     constexpr squid::Matrix<3, 2> mat1(
         5, 2,
@@ -18,26 +32,21 @@ int main(int argc, char* argv[]) {
         3, 4
     );
 
-    constexpr auto row = mat1.row(2);
-    constexpr int item1 = row.get(0);
-    std::cout << item1 << std::endl;
-
-    constexpr auto col = mat1.col(1);
-    constexpr int item2 = col.get(1);
-    std::cout << item2 << std::endl;
-
     constexpr squid::Matrix<2, 3> mat2(
         1, -2, 6,
         3, 4, -1
     );
 
-    constexpr auto mat = 2.2 * mat1 * mat2;
+    constexpr auto mat_res = (2.2 * mat1 * mat2)
+        .rows().map(const_sub_row<3>)
+        .append_row(squid::Vector<3, double>(4.13, 1.2, 9.9))
+        .push_row(squid::Vector<3, double>(3.14, 2.1, 1.1));
 
-    for(auto row : mat.rows()) {
-        for(auto n : row) {
-            std::cout << n << ",";
-        }
+    mat_res.rows().map([](auto row) {
+        row.map([](auto x) {
+            std::cout << x << ", ";
+        });
 
         std::cout << std::endl;
-    }
+    });
 }
