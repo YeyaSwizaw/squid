@@ -40,6 +40,11 @@ public:
         return idx_impl::template map_impl<F, decltype(f(T()))>::map(*this, f);
     }
 
+    template<typename F, typename U>
+    constexpr auto fold(F f, U u) const {
+        return idx_impl::template fold_impl<F, U, 0>::fold(*this, f, u);
+    }
+
     constexpr auto begin() const {
         return std::begin(data);
     }

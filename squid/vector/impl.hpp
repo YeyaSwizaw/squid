@@ -37,7 +37,21 @@ struct vec_idx_impl<Vector<Size, T>, std::index_sequence<Idxs...>> {
     template<typename F>
     struct map_impl<F, void> {
         static constexpr void map(const Vector<Size, T>& vec, F f) {
-            (f(vec.get(Idxs)), ...);
+            (f(vec.get(Idxs)) , ...);
+        }
+    };
+
+    template<typename F, typename U, std::size_t I>
+    struct fold_impl {
+        static constexpr auto fold(const Vector<Size, T>& vec, F f, U u) {
+            return fold_impl<F, decltype(f(u, vec.get(I))), I + 1>::fold(vec, f, f(u, vec.get(I)));
+        }
+    };
+
+    template<typename F, typename U>
+    struct fold_impl<F, U, Size> {
+        static constexpr auto fold(const Vector<Size, T>& vec, F f, U u) {
+            return u;
         }
     };
 };

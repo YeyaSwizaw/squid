@@ -96,6 +96,11 @@ public:
     constexpr Vector <M, T> operator*() const {
         return this->mat.col(this->idx);
     };
+
+    template<typename F>
+    constexpr auto map(F f) {
+        return Matrix<N, M, T>::col_idx_impl::col_map(this->mat, f);
+    }
 };
 
 }

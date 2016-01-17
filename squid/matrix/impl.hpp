@@ -44,10 +44,23 @@ struct mat_idx_impl<Matrix<Rows, Cols, T>, std::index_sequence<Idxs...>> {
         return Matrix<Rows - 1, Cols, T>::from_row_vectors(vecs...).push_row(row);
     }
 
+    static constexpr auto from_col_vectors(const Vector<Rows, T>& col) {
+        return Matrix<Rows, 1, T>(col.get(Idxs)...);
+    }
+
+    template<typename... V>
+    static constexpr auto from_col_vectors(const Vector<Rows, T>& col, V... vecs) {
+        return Matrix<Rows, Cols - 1, T>::from_col_vectors(vecs...).push_col(col);
+    }
+
     template<typename F, typename R>
     struct map_impl {
         static constexpr auto row_map(const Matrix<Rows, Cols, T>& mat, F f) {
             return Matrix<Rows, Cols, typename R::Type>::from_row_vectors(f(mat.row(Idxs))...);
+        }
+
+        static constexpr auto col_map(const Matrix<Rows, Cols, T>& mat, F f) {
+            return Matrix<Rows, Cols, typename R::Type>::from_col_vectors(f(mat.col(Idxs))...);
         }
     };
 
@@ -56,6 +69,10 @@ struct mat_idx_impl<Matrix<Rows, Cols, T>, std::index_sequence<Idxs...>> {
         static constexpr void row_map(const Matrix<Rows, Cols, T>& mat, F f) {
             (f(mat.row(Idxs)) , ...);
         }
+
+        static constexpr void col_map(const Matrix<Rows, Cols, T>& mat, F f) {
+            (f(mat.col(Idxs)) , ...);
+        }
     };
 
     template<typename F>
@@ -63,7 +80,31 @@ struct mat_idx_impl<Matrix<Rows, Cols, T>, std::index_sequence<Idxs...>> {
         using R = decltype(f(mat.row(0)));
         return map_impl<F, R>::row_map(mat, f);
     }
+
+    template<typename F>
+    static constexpr auto col_map(const Matrix<Rows, Cols, T>& mat, F f) {
+        using R = decltype(f(mat.col(0)));
+        return map_impl<F, R>::col_map(mat, f);
+    }
 };
+
+template<std::size_t I, std::size_t N, std::size_t M, typename T, typename Idxs, bool done = I == N - 1>
+struct push_col_impl;
+
+template<std::size_t I, std::size_t N, std::size_t M, typename T, std::size_t... Idxs>
+struct push_col_impl<I, N, M, T, std::index_sequence<Idxs...>, false> {
+    static constexpr auto push_col(const Matrix<N, M, T>& matrix, const Vector<N, T>& col) {
+        return push_col_impl<I + 1, N, M, T, std::index_sequence<Idxs...>>::push_col(matrix, col).push_row(Vector<M + 1, T>(col.get(I), matrix.row(I).get(Idxs)...));
+    }
+};
+
+template<std::size_t I, std::size_t N, std::size_t M, typename T, std::size_t... Idxs>
+struct push_col_impl<I, N, M, T, std::index_sequence<Idxs...>, true> {
+    static constexpr auto push_col(const Matrix<N, M, T>& matrix, const Vector<N, T>& col) {
+        return Matrix<1, M + 1, T>(col.get(I), matrix.row(I).get(Idxs)...);
+    }
+};
+
 
 template<std::size_t N, std::size_t M, std::size_t P, typename T, std::size_t... IdxsX, std::size_t...IdxsY>
 struct mat_pair_impl<N, M, P, T, std::pair<std::index_sequence<IdxsX...>, std::index_sequence<IdxsY...>>> {
@@ -78,6 +119,10 @@ struct mat_pair_impl<N, M, P, T, std::pair<std::index_sequence<IdxsX...>, std::i
 
     static constexpr Matrix<N + 1, M, T> push_row(const Matrix<N, M, T>& matrix, const Vector<M, T>& row) {
         return Matrix<N + 1, M, T>(row.get(IdxsY)..., matrix.get(IdxsX)...);
+    };
+
+    static constexpr Matrix<N, M + 1, T> push_col(const Matrix<N, M, T>& matrix, const Vector<N, T>& col) {
+        return push_col_impl<0, N, M, T, std::index_sequence<IdxsY...>>::push_col(matrix, col);
     };
 };
 

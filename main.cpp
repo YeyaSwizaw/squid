@@ -15,6 +15,11 @@ constexpr auto const_sub_row(squid::Vector<N, double> vec) {
     return vec.map(const_sub);
 }
 
+template<typename T>
+constexpr T add(T x, T y) {
+    return x + y;
+}
+
 int main(int argc, char* argv[]) {
     // Vector and dot product
     constexpr squid::Vector<4> vec1(1, 3, 5, 6);
@@ -24,7 +29,10 @@ int main(int argc, char* argv[]) {
 
     constexpr auto vec_res = (6 * vec1).map(const_div);
     vec_res.map([](auto x) { std::cout << x << ", "; });
-    std::cout << std::endl << std::endl;
+    std::cout << std::endl;
+
+    constexpr auto sum = vec_res.fold(add<double>, 0);
+    std::cout << sum << std::endl << std::endl;
 
     constexpr squid::Matrix<3, 2> mat1(
         5, 2,
@@ -38,9 +46,10 @@ int main(int argc, char* argv[]) {
     );
 
     constexpr auto mat_res = (2.2 * mat1 * mat2)
-        .rows().map(const_sub_row<3>)
+        .cols().map(const_sub_row<3>)
         .append_row(squid::Vector<3, double>(4.13, 1.2, 9.9))
-        .push_row(squid::Vector<3, double>(3.14, 2.1, 1.1));
+        .push_col(squid::Vector<4, double>(1.1, 2.2, 3.3, 4.4))
+        .push_row(squid::Vector<4, double>(3.14, 2.1, 1.1, 18.12));
 
     mat_res.rows().map([](auto row) {
         row.map([](auto x) {
